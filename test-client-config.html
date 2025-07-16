@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Client Config</title>
+    <script>
+        // Simulate what the server would inject
+        window.__CONFIG_MANAGER__ = {
+            mountPath: '/custom-path'
+        };
+    </script>
+</head>
+<body>
+    <h1>Testing Client Configuration</h1>
+    <div id="results"></div>
+    
+    <script type="module">
+        // Import the config functions we created
+        const getMountPath = () => {
+            return window.__CONFIG_MANAGER__?.mountPath || '/configurator';
+        };
+        
+        const getApiBaseUrl = () => {
+            return `${getMountPath()}/api`;
+        };
+        
+        const getAdminApiBaseUrl = () => {
+            return `${getApiBaseUrl()}/admin`;
+        };
+        
+        // Test the functions
+        const results = document.getElementById('results');
+        results.innerHTML = `
+            <p>Mount Path: ${getMountPath()}</p>
+            <p>API Base URL: ${getApiBaseUrl()}</p>
+            <p>Admin API Base URL: ${getAdminApiBaseUrl()}</p>
+            <p>Sample API calls that would be made:</p>
+            <ul>
+                <li>GET ${getAdminApiBaseUrl()}/applications</li>
+                <li>POST ${getAdminApiBaseUrl()}/applications/test-app/archive</li>
+                <li>GET ${getMountPath()}/admin (for React Router)</li>
+            </ul>
+        `;
+    </script>
+</body>
+</html>

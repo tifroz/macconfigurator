@@ -11,7 +11,7 @@ export default {
   output: {
     path: path.resolve(__dirname, "../../public"),
     filename: "bundle.[contenthash].js",
-    publicPath: "/configurator/admin/",
+    publicPath: "./", // Relative path so bundle loads from current directory
     clean: true,
   },
   module: {
@@ -37,9 +37,9 @@ export default {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, "../client/index.html"),
+      template: path.resolve(__dirname, "../client/index.template.html"),
       inject: "body",
-      publicPath: "/configurator/admin/",
+      publicPath: "auto", // Let webpack handle it
     }),
   ],
   devtool: process.env.NODE_ENV === "production" ? "source-map" : "eval-source-map",

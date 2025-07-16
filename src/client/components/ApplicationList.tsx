@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import SemverList from './SemverList';
 import { useAutosave } from '../hooks/useAutosave';
+import { getAdminApiBaseUrl } from '../config';
 
 interface Application {
   applicationId: string;
@@ -22,7 +23,7 @@ export default function ApplicationList() {
 
   const fetchApplications = async () => {
     try {
-      const response = await fetch('/api/admin/applications');
+      const response = await fetch(`${getAdminApiBaseUrl()}/applications`);
       if (!response.ok) throw new Error('Failed to fetch applications');
       const data = await response.json();
       setApplications(data);
@@ -41,7 +42,7 @@ export default function ApplicationList() {
     if (!confirm(`Archive application ${applicationId}?`)) return;
 
     try {
-      const response = await fetch(`/api/admin/applications/${applicationId}/archive`, {
+      const response = await fetch(`${getAdminApiBaseUrl()}/applications/${applicationId}/archive`, {
         method: 'POST'
       });
       if (!response.ok) throw new Error('Failed to archive');
@@ -53,7 +54,7 @@ export default function ApplicationList() {
 
   const handleUnarchive = async (applicationId: string) => {
     try {
-      const response = await fetch(`/api/admin/applications/${applicationId}/unarchive`, {
+      const response = await fetch(`${getAdminApiBaseUrl()}/applications/${applicationId}/unarchive`, {
         method: 'POST'
       });
       if (!response.ok) throw new Error('Failed to unarchive');
@@ -71,7 +72,7 @@ export default function ApplicationList() {
     const app = applications.find(a => a.applicationId === applicationId);
     if (!app) return;
 
-    const response = await fetch(`/api/admin/applications/${applicationId}/configs/${configName}`, {
+    const response = await fetch(`${getAdminApiBaseUrl()}/applications/${applicationId}/configs/${configName}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

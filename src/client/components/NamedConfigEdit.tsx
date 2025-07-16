@@ -5,6 +5,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import JsonEditor from './JsonEditor';
 import SemverList from './SemverList';
 import { useAutosave } from '../hooks/useAutosave';
+import { getAdminApiBaseUrl } from '../config';
 
 export default function NamedConfigEdit() {
   const { applicationId, configName } = useParams();
@@ -30,7 +31,7 @@ export default function NamedConfigEdit() {
 
   const fetchApplication = async () => {
     try {
-      const response = await fetch(`/api/admin/applications/${applicationId}`);
+      const response = await fetch(`${getAdminApiBaseUrl()}/applications/${applicationId}`);
       if (!response.ok) throw new Error('Failed to fetch application');
       const appData = await response.json();
       setApp(appData);
@@ -61,8 +62,8 @@ export default function NamedConfigEdit() {
 
     const method = isNew ? 'POST' : 'PUT';
     const url = isNew
-      ? `/api/admin/applications/${applicationId}/configs`
-      : `/api/admin/applications/${applicationId}/configs/${configName}`;
+      ? `${getAdminApiBaseUrl()}/applications/${applicationId}/configs`
+      : `${getAdminApiBaseUrl()}/applications/${applicationId}/configs/${configName}`;
 
     const currentVersions = versionsRef.current;
     const body = isNew

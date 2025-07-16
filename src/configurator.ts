@@ -3,6 +3,7 @@ import { configManager } from "./index.js";
 // In memory configuration (great for testing / experimenting, data will not persist acrss restarts)
 const inMemoryParams = {
   port: 4480,
+  mountPath: "/configurator", // Can be changed to any path like "/config", "/api/config", etc.
   logger: console,
   admin: {
     username: "admin",
@@ -13,7 +14,7 @@ await configManager.start(inMemoryParams);
 console.info(`
   ConfigManager started on port ${inMemoryParams.port} (in memory)
   
-  Navigate to http://localhost:${inMemoryParams.port}/configurator/admin to access the sandbox admin UI
+  Navigate to http://localhost:${inMemoryParams.port}${inMemoryParams.mountPath}/admin to access the sandbox admin UI
   
   Use the following credentials:
   Username: ${inMemoryParams.admin.username}
@@ -23,6 +24,7 @@ console.info(`
 // MongoDB configuration (data will persist across restarts)
 /*const configManagerOptions = {
     port: 4480,
+    mountPath: "/configurator",
     logger: console,
     admin: {
       username: "admin", // REPLACE WITH YOUR ADMIN USERNAME

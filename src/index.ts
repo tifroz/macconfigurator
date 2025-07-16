@@ -24,10 +24,13 @@ export const configManager = {
     const program = Effect.gen(function* () {
       const service = yield* ConfigStorageService;
 
+      // Use provided mountPath or default to '/configurator'
+      const mountPath = options.mountPath || '/configurator';
+
       // Create and start Express app
       const app = express();
       const configuratorApp = createExpressApp(options, service);
-      app.use("/configurator", configuratorApp);
+      app.use(mountPath, configuratorApp);
       const server = http.createServer(app);
 
       yield* Effect.promise(
@@ -35,9 +38,9 @@ export const configManager = {
           new Promise<void>((resolve) => {
             server.listen(options.port, () => {
               options.logger.info(`ConfigManager started on port ${options.port}`);
-              options.logger.info(`Admin UI available at http://localhost:${options.port}/configurator/admin`);
+              options.logger.info(`Admin UI available at http://localhost:${options.port}${mountPath}/admin`);
               options.logger.info(
-                `Config API available at http://localhost:${options.port}/configurator/config/{applicationId}/{version}`
+                `Config API available at http://localhost:${options.port}${mountPath}/config/{applicationId}/{version}`
               );
               resolve();
             });

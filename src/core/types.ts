@@ -18,6 +18,7 @@ export interface ConfigData {
 
 export interface ConfigManagerOptions {
   port: number;
+  mountPath?: string; // Base path for mounting the app (defaults to '/configurator')
   logger: any;
   admin: {
     username: string;

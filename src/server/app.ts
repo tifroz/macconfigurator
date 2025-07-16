@@ -35,11 +35,25 @@ export function createExpressApp(config: ConfigManagerOptions, service: ConfigSt
 
   // Serve React admin UI
   const publicPath = path.join(__dirname, "../../public");
+  const mountPath = config.mountPath || '/configurator';
+  
+  // Serve static assets
   app.use("/admin", adminAuth, express.static(publicPath));
+
+  // Serve index.html with injected mount path
+  app.get("/admin", adminAuth, (_req, res) => {
+    const indexPath = path.join(publicPath, "index.html");
+    let html = require("fs").readFileSync(indexPath, "utf-8");
+    html = html.replace("__MOUNT_PATH__", mountPath);
+    res.send(html);
+  });
 
   // Catch-all for React Router
   app.get("/admin/*", adminAuth, (_req, res) => {
-    res.sendFile(path.join(publicPath, "index.html"));
+    const indexPath = path.join(publicPath, "index.html");
+    let html = require("fs").readFileSync(indexPath, "utf-8");
+    html = html.replace("__MOUNT_PATH__", mountPath);
+    res.send(html);
   });
 
   // Health check

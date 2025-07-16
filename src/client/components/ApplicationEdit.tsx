@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import JsonEditor from './JsonEditor';
 import { useAutosave } from '../hooks/useAutosave';
+import { getAdminApiBaseUrl } from '../config';
 
 interface NamedConfig {
   data: any;
@@ -53,7 +54,7 @@ export default function ApplicationEdit() {
 
   const fetchApplication = async () => {
     try {
-      const response = await fetch(`/api/admin/applications/${applicationId}`);
+      const response = await fetch(`${getAdminApiBaseUrl()}/applications/${applicationId}`);
       if (!response.ok) throw new Error('Failed to fetch application');
       const data = await response.json();
       setApp(data);
@@ -71,8 +72,8 @@ export default function ApplicationEdit() {
 
     const method = isNew ? 'POST' : 'PUT';
     const url = isNew 
-      ? '/api/admin/applications' 
-      : `/api/admin/applications/${applicationId}`;
+      ? `${getAdminApiBaseUrl()}/applications` 
+      : `${getAdminApiBaseUrl()}/applications/${applicationId}`;
 
     const response = await fetch(url, {
       method,
@@ -101,7 +102,7 @@ export default function ApplicationEdit() {
 
     try {
       const response = await fetch(
-        `/api/admin/applications/${applicationId}/configs/${configName}`,
+        `${getAdminApiBaseUrl()}/applications/${applicationId}/configs/${configName}`,
         { method: 'DELETE' }
       );
       if (!response.ok) throw new Error('Failed to delete');
@@ -117,7 +118,7 @@ export default function ApplicationEdit() {
 
     try {
       const response = await fetch(
-        `/api/admin/applications/${applicationId}/configs`,
+        `${getAdminApiBaseUrl()}/applications/${applicationId}/configs`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
