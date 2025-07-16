@@ -14,17 +14,31 @@ A flexible configuration management service with a web-based admin UI, designed 
 
 ## Installation
 
+Install directly from GitHub:
+
 ```bash
-npm install macconfigurator
+npm install tifroz/macconfigurator
+```
+
+Or in your package.json:
+
+```json
+{
+  "dependencies": {
+    "macconfigurator": "tifroz/macconfigurator"
+  }
+}
 ```
 
 ### TypeScript Support
 
-Full TypeScript support is included. Types are automatically available when you install the package.
+Full TypeScript support is included. When installing from GitHub, the `prepare` script automatically builds the TypeScript files and generates type declarations.
 
 ```typescript
 import { configManager, createConfigClient, type ConfigManagerOptions } from 'macconfigurator';
 ```
+
+**Note**: The initial install may take a moment as it compiles the TypeScript source.
 
 ## Quick Start
 

@@ -20,7 +20,8 @@
     "dev": "npm run build:server && npm run dev:server",
     "dev:server": "node --watch ./dist/index.js",
     "typecheck": "tsc --noEmit",
-    "prepare": "npm run build:server"
+    "prepare": "npm run build:server",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "ajv": "^8.17.1",
@@ -31,6 +32,7 @@
     "express-basic-auth": "^1.2.1",
     "mongodb": "^6.12.0",
     "semver": "^7.6.3",
+    "typescript": "^5.7.2",
     "winston": "^3.17.0"
   },
   "devDependencies": {
@@ -52,7 +54,6 @@
     "style-loader": "^4.0.0",
     "tailwindcss": "^3.4.17",
     "ts-loader": "^9.5.1",
-    "typescript": "^5.7.2",
     "webpack": "^5.97.1",
     "webpack-cli": "^6.0.1"
   }

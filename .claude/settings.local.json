@@ -5,7 +5,9 @@
       "Bash(curl:*)",
       "Bash(open test-client-config.html)",
       "Bash(ls:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git commit:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }
