@@ -292,4 +292,4 @@ CMD ["node", "dist/configurator.js"]
 
 ## License
 
-MIT
+UNLICENSED - This is proprietary software.
