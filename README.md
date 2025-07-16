@@ -15,8 +15,15 @@ A flexible configuration management service with a web-based admin UI, designed 
 ## Installation
 
 ```bash
-npm install
-npm run build
+npm install macconfigurator
+```
+
+### TypeScript Support
+
+Full TypeScript support is included. Types are automatically available when you install the package.
+
+```typescript
+import { configManager, createConfigClient, type ConfigManagerOptions } from 'macconfigurator';
 ```
 
 ## Quick Start
@@ -165,32 +172,44 @@ const prodResponse = await fetch('http://localhost:4480/configurator/config/my-a
 const prodConfig = await prodResponse.json();
 ```
 
-### 5. Integration Example
+### 5. TypeScript Integration
 
-```javascript
-// In your application
-class ConfigClient {
-  constructor(baseUrl, appId) {
-    this.baseUrl = baseUrl;
-    this.appId = appId;
-  }
+```typescript
+import { createConfigClient, type ConfigClient } from 'macconfigurator';
 
-  async getConfig(version, environment = null) {
-    const url = `${this.baseUrl}/config/${this.appId}/${version}`;
-    const params = environment ? `?name=${environment}` : '';
-    
-    const response = await fetch(url + params);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch config: ${response.statusText}`);
-    }
-    
-    return response.json();
-  }
+// Define your config shape
+interface MyAppConfig {
+  apiUrl: string;
+  timeout: number;
+  features: {
+    darkMode: boolean;
+    analytics: boolean;
+    debugMode: boolean;
+  };
 }
 
-// Usage
-const configClient = new ConfigClient('http://localhost:4480/configurator', 'my-app');
-const config = await configClient.getConfig('1.0.0', 'production');
+// Create a typed client
+const client = createConfigClient('http://localhost:4480/configurator', 'my-app');
+
+// Fetch with type safety
+const config = await client.getConfig<MyAppConfig>('1.0.0', 'production');
+
+// TypeScript knows the shape!
+console.log(config.apiUrl); // string
+console.log(config.features.darkMode); // boolean
+```
+
+### 6. JavaScript Integration
+
+```javascript
+const { createConfigClient } = require('macconfigurator');
+
+// Create client
+const client = createConfigClient('http://localhost:4480/configurator', 'my-app');
+
+// Fetch configuration
+const config = await client.getConfig('1.0.0', 'production');
+console.log('Config loaded:', config);
 ```
 
 ## API Endpoints

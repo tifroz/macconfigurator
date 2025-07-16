@@ -3,7 +3,9 @@
     "allow": [
       "Bash(npm run build:*)",
       "Bash(curl:*)",
-      "Bash(open test-client-config.html)"
+      "Bash(open test-client-config.html)",
+      "Bash(ls:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
