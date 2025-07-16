@@ -32,13 +32,11 @@ Or in your package.json:
 
 ### TypeScript Support
 
-Full TypeScript support is included. When installing from GitHub, the `prepare` script automatically builds the TypeScript files and generates type declarations.
+Full TypeScript support is included. The package includes pre-built JavaScript files and TypeScript declarations, so it works immediately after installation.
 
 ```typescript
 import { configManager, createConfigClient, type ConfigManagerOptions } from 'macconfigurator';
 ```
-
-**Note**: The initial install may take a moment as it compiles the TypeScript source.
 
 ## Quick Start
 
