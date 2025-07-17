@@ -7,9 +7,9 @@ const __dirname = path.dirname(__filename);
 
 export default {
   mode: process.env.NODE_ENV || "development",
-  entry: path.resolve(__dirname, "../client/index.tsx"),
+  entry: path.resolve(__dirname, "./src/client/index.tsx"),
   output: {
-    path: path.resolve(__dirname, "../../public"),
+    path: path.resolve(__dirname, "./public"),
     filename: "bundle.[contenthash].js",
     publicPath: "./", // Relative path so bundle loads from current directory
     clean: true,
@@ -21,7 +21,7 @@ export default {
         use: {
           loader: "ts-loader",
           options: {
-            configFile: path.resolve(__dirname, "../../tsconfig.client.json"),
+            configFile: path.resolve(__dirname, "./tsconfig.client.json"),
           },
         },
         exclude: /node_modules/,
@@ -37,7 +37,7 @@ export default {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, "../client/index.template.html"),
+      template: path.resolve(__dirname, "./src/client/index.template.html"),
       inject: "body",
       publicPath: "auto", // Let webpack handle it
     }),
