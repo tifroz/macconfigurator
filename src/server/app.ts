@@ -3,6 +3,7 @@
 import express from "express";
 import compression from "compression";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import type { ConfigManagerOptions } from "../core/types.js";
 import type { ConfigStorageService } from "../core/services/ConfigStorageService.js";
@@ -43,7 +44,7 @@ export function createExpressApp(config: ConfigManagerOptions, service: ConfigSt
   // Serve index.html with injected mount path
   app.get("/admin", adminAuth, (_req, res) => {
     const indexPath = path.join(publicPath, "index.html");
-    let html = require("fs").readFileSync(indexPath, "utf-8");
+    let html = fs.readFileSync(indexPath, "utf-8");
     html = html.replace("__MOUNT_PATH__", mountPath);
     res.send(html);
   });
@@ -51,7 +52,7 @@ export function createExpressApp(config: ConfigManagerOptions, service: ConfigSt
   // Catch-all for React Router
   app.get("/admin/*", adminAuth, (_req, res) => {
     const indexPath = path.join(publicPath, "index.html");
-    let html = require("fs").readFileSync(indexPath, "utf-8");
+    let html = fs.readFileSync(indexPath, "utf-8");
     html = html.replace("__MOUNT_PATH__", mountPath);
     res.send(html);
   });
