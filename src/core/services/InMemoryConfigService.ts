@@ -1,18 +1,19 @@
 // 15 Lines by Claude Opus
 // In-memory implementation of ConfigStorageService for development/testing
 import { Effect, Layer, Ref, Context } from "effect";
-import type { AppConfig, ConfigRequest, ConfigResponse, ValidationError, ConfigManagerOptions } from "../types.js";
+import type { AppConfig, ConfigRequest, ConfigResponse, ConfigManagerOptions, SharedValidationError, Logger } from "../types.js";
+import { ConfigValidationError, ApplicationNotFoundError, ApplicationAlreadyExistsError, NamedConfigNotFoundError, NamedConfigAlreadyExistsError, SemverValidationError, VersionConflictError } from "../types.js";
 import { ConfigStorageService } from "./ConfigStorageService.js";
 import { validateConfig, validateSemver } from "../validation/schemaValidator.js";
 import * as semver from "semver";
 
 class InMemoryConfigServiceImpl implements ConfigStorageService {
-  constructor(private readonly store: Ref.Ref<Map<string, AppConfig>>, logger: any) {
+  constructor(private readonly store: Ref.Ref<Map<string, AppConfig>>, logger: Logger) {
     // Logger parameter is available for future use
     void logger;
   }
 
-  listApplications(): Effect.Effect<AppConfig[], Error> {
+  listApplications(): Effect.Effect<AppConfig[], never> {
     const self = this;
     return Effect.gen(function* () {
       const apps = yield* Ref.get(self.store);
@@ -20,7 +21,7 @@ class InMemoryConfigServiceImpl implements ConfigStorageService {
     });
   }
 
-  getApplication(applicationId: string): Effect.Effect<AppConfig | null, Error> {
+  getApplication(applicationId: string): Effect.Effect<AppConfig | null, never> {
     const self = this;
     return Effect.gen(function* () {
       const apps = yield* Ref.get(self.store);
@@ -28,25 +29,25 @@ class InMemoryConfigServiceImpl implements ConfigStorageService {
     });
   }
 
-  createApplication(config: AppConfig): Effect.Effect<AppConfig, Error | ValidationError[]> {
+  createApplication(config: AppConfig): Effect.Effect<AppConfig, SharedValidationError> {
     const self = this;
     return Effect.gen(function* () {
       // Validate schema
       const schemaErrors = yield* validateConfig(config.schema, "https://json-schema.org/draft/2020-12/schema");
       if (schemaErrors.length > 0) {
-        return yield* Effect.fail(schemaErrors);
+        return yield* Effect.fail(new ConfigValidationError({ errors: schemaErrors, context: "application schema" }));
       }
 
       // Validate default config against schema
       const configErrors = yield* validateConfig(config.defaultConfig.data, config.schema);
       if (configErrors.length > 0) {
-        return yield* Effect.fail(configErrors);
+        return yield* Effect.fail(new ConfigValidationError({ errors: configErrors, context: "default configuration" }));
       }
 
       // Check uniqueness
       const apps = yield* Ref.get(self.store);
       if (apps.has(config.applicationId)) {
-        return yield* Effect.fail(new Error(`Application ID '${config.applicationId}' already exists`));
+        return yield* Effect.fail(new ApplicationAlreadyExistsError({ applicationId: config.applicationId }));
       }
 
       // Add to store
@@ -60,12 +61,12 @@ class InMemoryConfigServiceImpl implements ConfigStorageService {
   updateApplication(
     applicationId: string,
     update: Partial<AppConfig>
-  ): Effect.Effect<AppConfig, Error | ValidationError[]> {
+  ): Effect.Effect<AppConfig, SharedValidationError> {
     const self = this;
     return Effect.gen(function* () {
       const existing = yield* self.getApplication(applicationId);
       if (!existing) {
-        return yield* Effect.fail(new Error(`Application '${applicationId}' not found`));
+        return yield* Effect.fail(new ApplicationNotFoundError({ applicationId }));
       }
 
       const updated = { ...existing, ...update, lastUpdated: new Date() };
@@ -74,7 +75,7 @@ class InMemoryConfigServiceImpl implements ConfigStorageService {
       if (update.schema) {
         const schemaErrors = yield* validateConfig(updated.schema, "https://json-schema.org/draft/2020-12/schema");
         if (schemaErrors.length > 0) {
-          return yield* Effect.fail(schemaErrors);
+          return yield* Effect.fail(new ConfigValidationError({ errors: schemaErrors, context: "application schema" }));
         }
       }
 
@@ -82,7 +83,7 @@ class InMemoryConfigServiceImpl implements ConfigStorageService {
       if (update.schema || update.defaultConfig) {
         const configErrors = yield* validateConfig(updated.defaultConfig.data, updated.schema);
         if (configErrors.length > 0) {
-          return yield* Effect.fail(configErrors);
+          return yield* Effect.fail(new ConfigValidationError({ errors: configErrors, context: "default configuration" }));
         }
       }
 
@@ -91,7 +92,10 @@ class InMemoryConfigServiceImpl implements ConfigStorageService {
         for (const [name, config] of Object.entries(updated.namedConfigs)) {
           const errors = yield* validateConfig(config.data, updated.schema);
           if (errors.length > 0) {
-            return yield* Effect.fail(errors.map((e) => ({ ...e, field: `namedConfigs.${name}.${e.field}` })));
+            return yield* Effect.fail(new ConfigValidationError({ 
+              errors: errors.map((e) => ({ ...e, field: `namedConfigs.${name}.${e.field}` })),
+              context: `named configuration '${name}'`
+            }));
           }
         }
       }
@@ -101,12 +105,11 @@ class InMemoryConfigServiceImpl implements ConfigStorageService {
       for (const [name, config] of Object.entries(updated.namedConfigs)) {
         for (const version of config.versions) {
           if (versionMap.has(version)) {
-            return yield* Effect.fail([
-              {
-                field: `namedConfigs.${name}.versions`,
-                message: `Version ${version} is already used by config '${versionMap.get(version)}'`,
-              },
-            ]);
+            return yield* Effect.fail(new VersionConflictError({ 
+              version, 
+              existingConfigName: versionMap.get(version)!, 
+              newConfigName: name 
+            }));
           }
           versionMap.set(version, name);
         }
@@ -117,35 +120,31 @@ class InMemoryConfigServiceImpl implements ConfigStorageService {
     });
   }
 
-  archiveApplication(applicationId: string): Effect.Effect<void, Error> {
+  archiveApplication(applicationId: string): Effect.Effect<void, SharedValidationError> {
     const self = this;
     return Effect.gen(function* () {
       const app = yield* self.getApplication(applicationId);
       if (!app) {
-        return yield* Effect.fail(new Error(`Application '${applicationId}' not found`));
+        return yield* Effect.fail(new ApplicationNotFoundError({ applicationId }));
       }
 
-      yield* self
-        .updateApplication(applicationId, { archived: true })
-        .pipe(Effect.mapError((e) => (Array.isArray(e) ? new Error(`Validation errors: ${JSON.stringify(e)}`) : e)));
+      yield* self.updateApplication(applicationId, { archived: true });
     });
   }
 
-  unarchiveApplication(applicationId: string): Effect.Effect<void, Error> {
+  unarchiveApplication(applicationId: string): Effect.Effect<void, SharedValidationError> {
     const self = this;
     return Effect.gen(function* () {
       const app = yield* self.getApplication(applicationId);
       if (!app) {
-        return yield* Effect.fail(new Error(`Application '${applicationId}' not found`));
+        return yield* Effect.fail(new ApplicationNotFoundError({ applicationId }));
       }
 
-      yield* self
-        .updateApplication(applicationId, { archived: false })
-        .pipe(Effect.mapError((e) => (Array.isArray(e) ? new Error(`Validation errors: ${JSON.stringify(e)}`) : e)));
+      yield* self.updateApplication(applicationId, { archived: false });
     });
   }
 
-  getConfig(request: ConfigRequest): Effect.Effect<ConfigResponse | null, Error> {
+  getConfig(request: ConfigRequest): Effect.Effect<ConfigResponse | null, never> {
     const self = this;
     return Effect.gen(function* () {
       const app = yield* self.getApplication(request.applicationId);
@@ -176,22 +175,22 @@ class InMemoryConfigServiceImpl implements ConfigStorageService {
     name: string,
     data: any,
     versions: string[]
-  ): Effect.Effect<AppConfig, Error | ValidationError[]> {
+  ): Effect.Effect<AppConfig, SharedValidationError> {
     const self = this;
     return Effect.gen(function* () {
       const app = yield* self.getApplication(applicationId);
       if (!app) {
-        return yield* Effect.fail(new Error(`Application '${applicationId}' not found`));
+        return yield* Effect.fail(new ApplicationNotFoundError({ applicationId }));
       }
 
       if (app.namedConfigs[name]) {
-        return yield* Effect.fail(new Error(`Named config '${name}' already exists`));
+        return yield* Effect.fail(new NamedConfigAlreadyExistsError({ applicationId, configName: name }));
       }
 
       // Validate versions
       const versionErrors = yield* validateSemver(versions);
       if (versionErrors.length > 0) {
-        return yield* Effect.fail(versionErrors);
+        return yield* Effect.fail(new SemverValidationError({ errors: versionErrors }));
       }
 
       const update = {
@@ -211,22 +210,22 @@ class InMemoryConfigServiceImpl implements ConfigStorageService {
     name: string,
     data: any,
     versions: string[]
-  ): Effect.Effect<AppConfig, Error | ValidationError[]> {
+  ): Effect.Effect<AppConfig, SharedValidationError> {
     const self = this;
     return Effect.gen(function* () {
       const app = yield* self.getApplication(applicationId);
       if (!app) {
-        return yield* Effect.fail(new Error(`Application '${applicationId}' not found`));
+        return yield* Effect.fail(new ApplicationNotFoundError({ applicationId }));
       }
 
       if (!app.namedConfigs[name]) {
-        return yield* Effect.fail(new Error(`Named config '${name}' not found`));
+        return yield* Effect.fail(new NamedConfigNotFoundError({ applicationId, configName: name }));
       }
 
       // Validate versions
       const versionErrors = yield* validateSemver(versions);
       if (versionErrors.length > 0) {
-        return yield* Effect.fail(versionErrors);
+        return yield* Effect.fail(new SemverValidationError({ errors: versionErrors }));
       }
 
       const update = {
@@ -241,12 +240,12 @@ class InMemoryConfigServiceImpl implements ConfigStorageService {
     });
   }
 
-  deleteNamedConfig(applicationId: string, name: string): Effect.Effect<AppConfig, Error> {
+  deleteNamedConfig(applicationId: string, name: string): Effect.Effect<AppConfig, SharedValidationError> {
     const self = this;
     return Effect.gen(function* () {
       const app = yield* self.getApplication(applicationId);
       if (!app) {
-        return yield* Effect.fail(new Error(`Application '${applicationId}' not found`));
+        return yield* Effect.fail(new ApplicationNotFoundError({ applicationId }));
       }
 
       const { [name]: _, ...remainingConfigs } = app.namedConfigs;
@@ -255,9 +254,7 @@ class InMemoryConfigServiceImpl implements ConfigStorageService {
         namedConfigs: remainingConfigs,
       };
 
-      const result = yield* self
-        .updateApplication(applicationId, update)
-        .pipe(Effect.mapError((e) => (Array.isArray(e) ? new Error(`Validation errors: ${JSON.stringify(e)}`) : e)));
+      const result = yield* self.updateApplication(applicationId, update);
       return result;
     });
   }

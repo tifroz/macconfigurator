@@ -1,32 +1,32 @@
 // 10 Lines by Claude Opus
 // Hook for implementing autosave functionality with debouncing and blur support
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from "react";
 
 export function useAutosave(
   saveFunction: () => Promise<void>,
-  delay: number = 10000  // Changed default to 10 seconds
+  delay: number = 1000 // Changed default to 10 seconds
 ) {
-  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout>();
   const isSavingRef = useRef(false);
 
   const executeSave = useCallback(async () => {
     if (isSavingRef.current) return;
-    
+
     isSavingRef.current = true;
-    setStatus('saving');
+    setStatus("saving");
     setError(null);
-    
+
     try {
       await saveFunction();
-      setStatus('saved');
-      
+      setStatus("saved");
+
       // Reset to idle after showing saved status
-      setTimeout(() => setStatus('idle'), 2000);
+      setTimeout(() => setStatus("idle"), 2000);
     } catch (err) {
-      setStatus('error');
-      setError(err instanceof Error ? err.message : 'Save failed');
+      setStatus("error");
+      setError(err instanceof Error ? err.message : "Save failed");
     } finally {
       isSavingRef.current = false;
     }

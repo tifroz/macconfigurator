@@ -7,7 +7,12 @@
       "Bash(ls:*)",
       "Bash(find:*)",
       "Bash(git commit:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npm run typecheck:*)",
+      "WebFetch(domain:effect.website)",
+      "Bash(npm run:*)",
+      "Bash(node:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

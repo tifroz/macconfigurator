@@ -1,7 +1,7 @@
 {
   "comments": "devDependencies were moved to dependencies to facilitate direct installs from github repository",
   "name": "macconfigurator",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "Configuration manager",
   "license": "MIT",
   "type": "module",
