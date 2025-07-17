@@ -6,7 +6,6 @@ yarn-error.log*
 
 # Build outputs
 /build/
-public/bundle.*.js
 *.tsbuildinfo
 
 # Environment files
