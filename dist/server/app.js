@@ -3,6 +3,7 @@
 import express from "express";
 import compression from "compression";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import { createBasicAuth } from "./middleware/basicAuth.js";
 import { createConfigRoutes } from "./routes/configRoutes.js";
@@ -32,14 +33,14 @@ export function createExpressApp(config, service) {
     // Serve index.html with injected mount path
     app.get("/admin", adminAuth, (_req, res) => {
         const indexPath = path.join(publicPath, "index.html");
-        let html = require("fs").readFileSync(indexPath, "utf-8");
+        let html = fs.readFileSync(indexPath, "utf-8");
         html = html.replace("__MOUNT_PATH__", mountPath);
         res.send(html);
     });
     // Catch-all for React Router
     app.get("/admin/*", adminAuth, (_req, res) => {
         const indexPath = path.join(publicPath, "index.html");
-        let html = require("fs").readFileSync(indexPath, "utf-8");
+        let html = fs.readFileSync(indexPath, "utf-8");
         html = html.replace("__MOUNT_PATH__", mountPath);
         res.send(html);
     });
