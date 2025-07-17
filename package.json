@@ -2,6 +2,7 @@
   "name": "macconfigurator",
   "version": "1.0.0",
   "description": "Configuration manager",
+  "comment": "postinstall / build:if-needed required in scripts to build the module on `npm install` from github",
   "license": "UNLICENSED",
   "type": "module",
   "main": "./dist/index.js",
@@ -20,8 +21,8 @@
     "dev": "npm run build:server && npm run dev:server",
     "dev:server": "node --watch ./dist/index.js",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build",
-    "prepare": "npm run build"
+    "postinstall": "npm run build:if-needed",
+    "build:if-needed": "[ -d dist ] || (npm install --only=dev && npm run build)",
   },
   "dependencies": {
     "ajv": "^8.17.1",
