@@ -2,17 +2,38 @@
 // Implement MongoDB-backed ConfigStorageService with connection memoization using Effect Layer
 import { Effect, Layer, Context } from "effect";
 import { MongoClient, Db, Collection } from "mongodb";
-import type { AppConfig, ConfigRequest, ConfigResponse, ConfigManagerOptions, SharedValidationError, MongoDbError, Logger, NamedConfig } from "../types.js";
-import { ConfigValidationError, ApplicationNotFoundError, ApplicationAlreadyExistsError, NamedConfigNotFoundError, NamedConfigAlreadyExistsError, SemverValidationError, VersionConflictError, MongoNetworkError, MongoAuthError, UnexpectedServerError } from "../types.js";
+import type {
+  AppConfig,
+  ConfigRequest,
+  ConfigResponse,
+  ConfigManagerOptions,
+  SharedValidationError,
+  MongoDbError,
+  Logger,
+  NamedConfig,
+} from "../types.js";
+import {
+  ConfigValidationError,
+  ApplicationNotFoundError,
+  ApplicationAlreadyExistsError,
+  NamedConfigNotFoundError,
+  NamedConfigAlreadyExistsError,
+  SemverValidationError,
+  VersionConflictError,
+  MongoNetworkError,
+  MongoAuthError,
+  UnexpectedServerError,
+} from "../types.js";
 import { ConfigStorageService } from "./ConfigStorageService.js";
 import { validateConfig, validateSemver } from "../validation/schemaValidator.js";
 import * as semver from "semver";
 
 class MongoConfigServiceImpl implements ConfigStorageService {
+  readonly logger: Logger;
   constructor(db: Db, private readonly collection: Collection<AppConfig>, logger: Logger) {
     // DB and logger parameters are available for future use
     void db;
-    void logger;
+    this.logger = logger;
   }
 
   listApplications(): Effect.Effect<AppConfig[], MongoDbError> {
@@ -49,7 +70,9 @@ class MongoConfigServiceImpl implements ConfigStorageService {
       // Validate default config against schema
       const configErrors = yield* validateConfig(config.defaultConfig.data, config.schema);
       if (configErrors.length > 0) {
-        return yield* Effect.fail(new ConfigValidationError({ errors: configErrors, context: "default configuration" }));
+        return yield* Effect.fail(
+          new ConfigValidationError({ errors: configErrors, context: "default configuration" })
+        );
       }
 
       // Check uniqueness
@@ -66,7 +89,8 @@ class MongoConfigServiceImpl implements ConfigStorageService {
       const toInsert = { ...config, lastUpdated: new Date() };
       yield* Effect.tryPromise({
         try: () => self.collection.insertOne(toInsert as any),
-        catch: (error) => new UnexpectedServerError({ message: `Failed to create application: ${error}`, cause: error }),
+        catch: (error) =>
+          new UnexpectedServerError({ message: `Failed to create application: ${error}`, cause: error }),
       });
 
       return toInsert;
@@ -88,8 +112,17 @@ class MongoConfigServiceImpl implements ConfigStorageService {
 
       // 3 Lines by Claude Opus
       // Remove _id from updated object to prevent MongoDB immutable field error
-      const { _id, ...existingWithoutId } = existing as any;
-      const updated = { ...existingWithoutId, ...update, lastUpdated: new Date() };
+      //const { _id, ...existingWithoutId } = existing as any;
+      //const updated = { ...existingWithoutId, ...update, lastUpdated: new Date() };
+      type MongoAppConfig = AppConfig & { _id: string };
+
+      self.logger.info(
+        `\n\nUpdating application ${applicationId} from existing ${JSON.stringify(existing, null, 2)}\n\n`
+      );
+      self.logger.info(`\n\nUpdating application ${applicationId} from update ${JSON.stringify(update, null, 2)}\n\n`);
+
+      const updatedRecord = { ...(existing as MongoAppConfig), ...update, lastUpdated: new Date() };
+      const { _id, ...updated } = updatedRecord;
 
       // Validate schema if updated
       if (update.schema) {
@@ -103,7 +136,9 @@ class MongoConfigServiceImpl implements ConfigStorageService {
       if (update.schema || update.defaultConfig) {
         const configErrors = yield* validateConfig(updated.defaultConfig.data, updated.schema);
         if (configErrors.length > 0) {
-          return yield* Effect.fail(new ConfigValidationError({ errors: configErrors, context: "default configuration" }));
+          return yield* Effect.fail(
+            new ConfigValidationError({ errors: configErrors, context: "default configuration" })
+          );
         }
       }
 
@@ -112,10 +147,12 @@ class MongoConfigServiceImpl implements ConfigStorageService {
         for (const [name, config] of Object.entries(updated.namedConfigs) as [string, NamedConfig][]) {
           const errors = yield* validateConfig(config.data, updated.schema);
           if (errors.length > 0) {
-            return yield* Effect.fail(new ConfigValidationError({ 
-              errors: errors.map((e) => ({ ...e, field: `namedConfigs.${name}.${e.field}` })),
-              context: `named configuration '${name}'`
-            }));
+            return yield* Effect.fail(
+              new ConfigValidationError({
+                errors: errors.map((e) => ({ ...e, field: `namedConfigs.${name}.${e.field}` })),
+                context: `named configuration '${name}'`,
+              })
+            );
           }
         }
       }
@@ -125,19 +162,25 @@ class MongoConfigServiceImpl implements ConfigStorageService {
       for (const [name, config] of Object.entries(updated.namedConfigs) as [string, NamedConfig][]) {
         for (const version of config.versions) {
           if (versionMap.has(version)) {
-            return yield* Effect.fail(new VersionConflictError({ 
-              version, 
-              existingConfigName: versionMap.get(version)!, 
-              newConfigName: name 
-            }));
+            return yield* Effect.fail(
+              new VersionConflictError({
+                version,
+                existingConfigName: versionMap.get(version)!,
+                newConfigName: name,
+              })
+            );
           }
           versionMap.set(version, name);
         }
       }
 
       yield* Effect.tryPromise({
-        try: () => self.collection.replaceOne({ applicationId }, updated),
-        catch: (error) => new UnexpectedServerError({ message: `Failed to update application: ${error}`, cause: error }),
+        try: () => {
+          self.logger.info(`\n\nUpdating application ${applicationId} with  ${JSON.stringify(updated, null, 2)}\n\n`);
+          return self.collection.replaceOne({ applicationId }, updated);
+        },
+        catch: (error) =>
+          new UnexpectedServerError({ message: `Failed to update application: ${error}`, cause: error }),
       });
 
       return updated;
@@ -158,7 +201,8 @@ class MongoConfigServiceImpl implements ConfigStorageService {
       try: async () => {
         await this.collection.updateOne({ applicationId }, { $set: { archived: false, lastUpdated: new Date() } });
       },
-      catch: (error) => new UnexpectedServerError({ message: `Failed to unarchive application: ${error}`, cause: error }),
+      catch: (error) =>
+        new UnexpectedServerError({ message: `Failed to unarchive application: ${error}`, cause: error }),
     });
   }
 
@@ -185,7 +229,7 @@ class MongoConfigServiceImpl implements ConfigStorageService {
       // Return default config if no match
       return {
         data: app.defaultConfig.data,
-        cacheControl: "max-age=604800", // 7 days for default
+        cacheControl: "max-age=86400", // 1 day for default
       };
     });
   }
@@ -260,7 +304,10 @@ class MongoConfigServiceImpl implements ConfigStorageService {
     });
   }
 
-  deleteNamedConfig(applicationId: string, name: string): Effect.Effect<AppConfig, SharedValidationError | MongoDbError> {
+  deleteNamedConfig(
+    applicationId: string,
+    name: string
+  ): Effect.Effect<AppConfig, SharedValidationError | MongoDbError> {
     const self = this;
     return Effect.gen(function* () {
       const app = yield* self.getApplication(applicationId);
@@ -292,12 +339,16 @@ const MongoConnectionLayer = Layer.effect(
     }
 
     const mongodb = config.mongodb!;
-    
+
     // Create and connect client immediately
     const connectResult = yield* Effect.tryPromise({
       try: async () => {
         const url = `mongodb://${mongodb.auth.user}:${mongodb.auth.password}@${mongodb.host}:${mongodb.port}/${mongodb.auth.database}?authSource=${mongodb.auth.database}`;
-        config.logger.info("Attempting MongoDB connection", { host: mongodb.host, port: mongodb.port, database: mongodb.auth.database });
+        config.logger.info("Attempting MongoDB connection", {
+          host: mongodb.host,
+          port: mongodb.port,
+          database: mongodb.auth.database,
+        });
         const client = new MongoClient(url, {
           serverSelectionTimeoutMS: 5000,
           connectTimeoutMS: 10000,
@@ -324,7 +375,7 @@ const MongoConnectionLayer = Layer.effect(
     const collection = db.collection<AppConfig>(mongodb.collection);
 
     // Add shutdown handler
-    process.on('SIGTERM', () => {
+    process.on("SIGTERM", () => {
       connectResult.close().catch((err) => {
         config.logger.error("Error closing MongoDB connection", err);
       });
@@ -339,9 +390,11 @@ const MongoConnectionLayer = Layer.effect(
 export const MongoConfigServiceLayer = Layer.effect(
   ConfigStorageService,
   Effect.gen(function* () {
-    const { db, collection } = yield* Context.GenericTag<{ db: Db; collection: Collection<AppConfig>; client: MongoClient }>(
-      "MongoConnection"
-    );
+    const { db, collection } = yield* Context.GenericTag<{
+      db: Db;
+      collection: Collection<AppConfig>;
+      client: MongoClient;
+    }>("MongoConnection");
     const config = yield* Context.GenericTag<ConfigManagerOptions>("ConfigManagerOptions");
 
     return new MongoConfigServiceImpl(db, collection, config.logger);
