@@ -1,3 +1,7 @@
+# Readiness
+
+This is internally tested software, not designed to public consumption, not designed to run in any productions environement of any kind. Use at your own risk.
+
 # Mac Configurator
 
 A flexible configuration management service with a web-based admin UI, designed to serve application configurations with version control and named environment support.
@@ -35,7 +39,7 @@ Or in your package.json:
 Full TypeScript support is included. The package includes pre-built JavaScript files and TypeScript declarations, so it works immediately after installation.
 
 ```typescript
-import { configManager, createConfigClient, type ConfigManagerOptions } from 'macconfigurator';
+import { configManager, createConfigClient, type ConfigManagerOptions } from "macconfigurator";
 ```
 
 ## Quick Start
@@ -59,6 +63,7 @@ await configManager.start(inMemoryParams);
 ```
 
 After starting, access:
+
 - Admin UI: `http://localhost:4480/configurator/admin`
 - Config API: `http://localhost:4480/configurator/config/{applicationId}/{version}`
 
@@ -92,14 +97,14 @@ await configManager.start(mongoConfig);
 
 ## Configuration Options
 
-| Option | Type | Required | Default | Description |
-|--------|------|----------|---------|-------------|
-| `port` | number | Yes | - | Port to run the service on |
-| `mountPath` | string | No | `/configurator` | Base path for mounting the service |
-| `logger` | object | Yes | - | Logger instance (e.g., `console`) |
-| `admin.username` | string | Yes | - | Admin UI username |
-| `admin.password` | string | Yes | - | Admin UI password |
-| `mongodb` | object | No | - | MongoDB configuration (if not provided, uses in-memory storage) |
+| Option           | Type   | Required | Default         | Description                                                     |
+| ---------------- | ------ | -------- | --------------- | --------------------------------------------------------------- |
+| `port`           | number | Yes      | -               | Port to run the service on                                      |
+| `mountPath`      | string | No       | `/configurator` | Base path for mounting the service                              |
+| `logger`         | object | Yes      | -               | Logger instance (e.g., `console`)                               |
+| `admin.username` | string | Yes      | -               | Admin UI username                                               |
+| `admin.password` | string | Yes      | -               | Admin UI password                                               |
+| `mongodb`        | object | No       | -               | MongoDB configuration (if not provided, uses in-memory storage) |
 
 ## Usage Examples
 
@@ -113,7 +118,7 @@ const config = {
   port: 3000,
   mountPath: "/api/config",
   logger: console,
-  admin: { username: "admin", password: "secret" }
+  admin: { username: "admin", password: "secret" },
 };
 
 // Access at:
@@ -176,18 +181,18 @@ Applications can fetch their configurations:
 
 ```javascript
 // Fetch default config
-const response = await fetch('http://localhost:4480/configurator/config/my-app/1.0.0');
+const response = await fetch("http://localhost:4480/configurator/config/my-app/1.0.0");
 const config = await response.json();
 
 // Fetch named config (e.g., production)
-const prodResponse = await fetch('http://localhost:4480/configurator/config/my-app/1.0.0?name=production');
+const prodResponse = await fetch("http://localhost:4480/configurator/config/my-app/1.0.0?name=production");
 const prodConfig = await prodResponse.json();
 ```
 
 ### 5. TypeScript Integration
 
 ```typescript
-import { createConfigClient, type ConfigClient } from 'macconfigurator';
+import { createConfigClient, type ConfigClient } from "macconfigurator";
 
 // Define your config shape
 interface MyAppConfig {
@@ -201,10 +206,10 @@ interface MyAppConfig {
 }
 
 // Create a typed client
-const client = createConfigClient('http://localhost:4480/configurator', 'my-app');
+const client = createConfigClient("http://localhost:4480/configurator", "my-app");
 
 // Fetch with type safety
-const config = await client.getConfig<MyAppConfig>('1.0.0', 'production');
+const config = await client.getConfig<MyAppConfig>("1.0.0", "production");
 
 // TypeScript knows the shape!
 console.log(config.apiUrl); // string
@@ -214,14 +219,14 @@ console.log(config.features.darkMode); // boolean
 ### 6. JavaScript Integration
 
 ```javascript
-const { createConfigClient } = require('macconfigurator');
+const { createConfigClient } = require("macconfigurator");
 
 // Create client
-const client = createConfigClient('http://localhost:4480/configurator', 'my-app');
+const client = createConfigClient("http://localhost:4480/configurator", "my-app");
 
 // Fetch configuration
-const config = await client.getConfig('1.0.0', 'production');
-console.log('Config loaded:', config);
+const config = await client.getConfig("1.0.0", "production");
+console.log("Config loaded:", config);
 ```
 
 ## API Endpoints
@@ -229,6 +234,7 @@ console.log('Config loaded:', config);
 ### Public Endpoints
 
 - `GET /config/{applicationId}/{version}` - Fetch configuration
+
   - Query params: `?name={configName}` for named configurations
 
 - `GET /health` - Health check endpoint
@@ -292,4 +298,4 @@ CMD ["node", "dist/configurator.js"]
 
 ## License
 
-UNLICENSED - This is proprietary software.
+MIT

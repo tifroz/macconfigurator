@@ -1,9 +1,9 @@
 {
   "comments": "devDependencies were moved to dependencies to facilitate direct installs from github repository",
   "name": "macconfigurator",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Configuration manager",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -33,9 +33,9 @@
     "express-basic-auth": "^1.2.1",
     "mongodb": "^6.12.0",
     "semver": "^7.6.3",
-    "winston": "^3.17.0",
-
-
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
     "@types/compression": "^1.7.5",
     "@types/express": "^5.0.0",
     "@types/node": "^20.10.0",
@@ -57,8 +57,5 @@
     "typescript": "^5.7.2",
     "webpack": "^5.97.1",
     "webpack-cli": "^6.0.1"
-  },
-  "devDependencies": {
-
   }
 }

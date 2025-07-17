@@ -1,0 +1,48 @@
+# Source files (we only want to publish the built dist folder)
+src/
+test-*.js
+test-*.html
+
+# Development files
+tsconfig*.json
+webpack.config.js
+tailwind.config.js
+postcss.config.js
+.claude/
+
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+
+# Build artifacts we don't need in the package
+*.tsbuildinfo
