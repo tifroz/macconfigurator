@@ -2,6 +2,7 @@
   "name": "macconfigurator",
   "version": "1.0.0",
   "description": "Configuration manager",
+  "license": "UNLICENSED",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -11,7 +12,7 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist"],
+  "files": ["dist", "README.md"],
   "scripts": {
     "build": "npm run build:server && npm run build:client",
     "build:server": "tsc -b tsconfig.json",
@@ -19,7 +20,8 @@
     "build:dev": "tsc -b tsconfig.json --watch",
     "dev": "npm run build:server && npm run dev:server",
     "dev:server": "node --watch ./dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "ajv": "^8.17.1",

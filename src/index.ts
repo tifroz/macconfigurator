@@ -9,6 +9,20 @@ import { InMemoryConfigServiceLayer } from "./core/services/InMemoryConfigServic
 import { createExpressApp } from "./server/app.js";
 import http from "http";
 
+// Re-export types for consumers
+export type { 
+  ConfigManagerOptions, 
+  AppConfig, 
+  NamedConfig, 
+  ConfigData,
+  ValidationError,
+  ConfigRequest,
+  ConfigResponse 
+} from "./core/types.js";
+
+// Export client utilities
+export { ConfigClient, createConfigClient, type ConfigClientOptions } from "./client.js";
+
 export const configManager = {
   async start(options: ConfigManagerOptions): Promise<void> {
     // Create the config layer
