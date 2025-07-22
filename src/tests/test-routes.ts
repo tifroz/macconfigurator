@@ -1,17 +1,23 @@
 #!/usr/bin/env node
 
-// 20 Lines by Claude Opus
-// Test script to verify all routes work with configurable mount path
+// 25 Lines by Claude Sonnet
+// Test script to verify all routes work with configurable mount path - converted to TypeScript
 
 const BASE_URL = 'http://localhost:4480';
 const MOUNT_PATH = '/configurator'; // This should match what's in configurator.ts
 const AUTH = Buffer.from('admin:admin').toString('base64');
 
-async function testRoute(method, path, body = null) {
+interface TestResponse {
+  success: boolean;
+  data?: any;
+  error?: Error;
+}
+
+async function testRoute(method: string, path: string, body: any = null): Promise<TestResponse> {
   const url = `${BASE_URL}${MOUNT_PATH}${path}`;
   console.log(`\nTesting ${method} ${url}`);
   
-  const options = {
+  const options: RequestInit = {
     method,
     headers: {
       'Authorization': `Basic ${AUTH}`,
@@ -26,7 +32,7 @@ async function testRoute(method, path, body = null) {
   try {
     const response = await fetch(url, options);
     const contentType = response.headers.get('content-type');
-    let data;
+    let data: any;
     
     if (contentType && contentType.includes('application/json')) {
       data = await response.json();
@@ -64,12 +70,12 @@ async function testRoute(method, path, body = null) {
     
     return { success: response.ok, data };
   } catch (error) {
-    console.log('❌ Error:', error.message);
-    return { success: false, error };
+    console.log('❌ Error:', (error as Error).message);
+    return { success: false, error: error as Error };
   }
 }
 
-async function runTests() {
+async function runTests(): Promise<void> {
   console.log('=== Testing ConfigManager Routes ===');
   console.log(`Base URL: ${BASE_URL}`);
   console.log(`Mount Path: ${MOUNT_PATH}`);

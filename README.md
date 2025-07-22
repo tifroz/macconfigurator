@@ -57,6 +57,10 @@ const inMemoryParams = {
     username: "admin",
     password: "admin",
   },
+  cacheControl: {
+    maxAgeSeconds: 60,        // Cache duration for named configs
+    defaultMaxAgeSeconds: 300 // Cache duration for default configs
+  },
 };
 
 await configManager.start(inMemoryParams);
@@ -80,6 +84,10 @@ const mongoConfig = {
     username: process.env.ADMIN_USERNAME,
     password: process.env.ADMIN_PASSWORD,
   },
+  cacheControl: {
+    maxAgeSeconds: 60,        // Cache duration for named configs
+    defaultMaxAgeSeconds: 300 // Cache duration for default configs
+  },
   mongodb: {
     host: "localhost",
     port: 27017,
@@ -97,14 +105,16 @@ await configManager.start(mongoConfig);
 
 ## Configuration Options
 
-| Option           | Type   | Required | Default         | Description                                                     |
-| ---------------- | ------ | -------- | --------------- | --------------------------------------------------------------- |
-| `port`           | number | Yes      | -               | Port to run the service on                                      |
-| `mountPath`      | string | No       | `/configurator` | Base path for mounting the service                              |
-| `logger`         | object | Yes      | -               | Logger instance (e.g., `console`)                               |
-| `admin.username` | string | Yes      | -               | Admin UI username                                               |
-| `admin.password` | string | Yes      | -               | Admin UI password                                               |
-| `mongodb`        | object | No       | -               | MongoDB configuration (if not provided, uses in-memory storage) |
+| Option                            | Type   | Required | Default         | Description                                                     |
+| --------------------------------- | ------ | -------- | --------------- | --------------------------------------------------------------- |
+| `port`                            | number | Yes      | -               | Port to run the service on                                      |
+| `mountPath`                       | string | No       | `/configurator` | Base path for mounting the service                              |
+| `logger`                          | object | Yes      | -               | Logger instance (e.g., `console`)                               |
+| `admin.username`                  | string | Yes      | -               | Admin UI username                                               |
+| `admin.password`                  | string | Yes      | -               | Admin UI password                                               |
+| `cacheControl.maxAgeSeconds`      | number | No       | 60              | Cache-Control header duration for named configurations (seconds) |
+| `cacheControl.defaultMaxAgeSeconds` | number | No       | 300             | Cache-Control header duration for default configurations (seconds) |
+| `mongodb`                         | object | No       | -               | MongoDB configuration (if not provided, uses in-memory storage) |
 
 ## Usage Examples
 
@@ -119,6 +129,10 @@ const config = {
   mountPath: "/api/config",
   logger: console,
   admin: { username: "admin", password: "secret" },
+  cacheControl: {
+    maxAgeSeconds: 60,        // Cache duration for named configs
+    defaultMaxAgeSeconds: 300 // Cache duration for default configs
+  },
 };
 
 // Access at:
@@ -229,6 +243,44 @@ const config = await client.getConfig("1.0.0", "production");
 console.log("Config loaded:", config);
 ```
 
+## Cache Control
+
+The configurator supports HTTP caching to improve performance and reduce server load. Cache durations are configurable:
+
+```javascript
+const config = {
+  port: 4480,
+  logger: console,
+  admin: { username: "admin", password: "admin" },
+  cacheControl: {
+    maxAgeSeconds: 60,        // Cache duration for named configurations
+    defaultMaxAgeSeconds: 300 // Cache duration for default configurations
+  }
+};
+```
+
+### Cache Behavior
+
+- **Named Configurations**: When a specific named configuration is matched (e.g., `production`, `staging`), the response includes `Cache-Control: max-age={maxAgeSeconds}`
+- **Default Configurations**: When no named configuration matches and the default configuration is returned, the response includes `Cache-Control: max-age={defaultMaxAgeSeconds}`
+- **Different Cache Durations**: You can set different cache durations for named vs default configs. For example, default configs might be cached longer (300 seconds) while named configs change more frequently (60 seconds)
+
+### Cache Headers Example
+
+```bash
+# Named config response
+curl -I "http://localhost:4480/configurator/config/my-app/1.0.0"
+# HTTP/1.1 200 OK
+# Cache-Control: max-age=60
+# Content-Type: application/json
+
+# Default config response (no named config matches)
+curl -I "http://localhost:4480/configurator/config/my-app/2.0.0"
+# HTTP/1.1 200 OK  
+# Cache-Control: max-age=300
+# Content-Type: application/json
+```
+
 ## API Endpoints
 
 ### Public Endpoints
@@ -265,6 +317,51 @@ npm run build
 # Run tests
 npm test
 ```
+
+### Testing
+
+The project includes comprehensive test scripts that validate the entire configuration management workflow:
+
+#### Main Test Suite (`npm test`)
+
+The main test script creates a complete end-to-end test scenario:
+
+1. **Server Setup**: Starts a configurator server using InMemoryService with admin/admin credentials
+2. **Application Creation**: Creates 'app-test' with a JSON schema and default configuration
+3. **Default Config Validation**: Verifies that the default configuration is properly returned
+4. **Named Configuration**: Creates a named version 'test' with different configuration data
+5. **Version Association**: Associates the named config with version "1.0.0"
+6. **Configuration Override**: Verifies that named configs override default configs for specific versions
+
+**Test Data Used:**
+- **Schema**: Flexible JSON schema allowing any properties
+- **Default Config**: `{"foo": "default config"}`
+- **Named Config**: `{"foo": "named config"}`
+- **Version**: `"1.0.0"`
+
+**Test Flow:**
+```bash
+npm test
+# [TEST] Starting configurator server...
+# [TEST] Creating application 'app-test' with schema and default config...
+# [TEST] Application created successfully with schema-valid default configuration
+# [TEST] Querying config for http://localhost:4481/configurator/config/app-test/1.0.0...
+# [TEST] Default configuration verified successfully
+# [TEST] Creating named configuration 'test' with config...
+# [TEST] Named configuration created successfully
+# [TEST] Querying config for http://localhost:4481/configurator/config/app-test/1.0.0 (should return named config)...
+# [TEST] Named configuration verified successfully
+# [TEST] 🎉 All tests passed successfully!
+```
+
+#### Additional Test Scripts
+
+- **`test-routes.ts`**: Tests all API endpoints and admin interface routing
+- **`test-config-validation-error.ts`**: Comprehensive validation error testing
+- **`test-error-details.ts`**: Detailed error analysis and reporting
+- **`test-client-config.html`**: Frontend client configuration testing
+
+All tests use TypeScript and are located in the `/tests` directory.
 
 ## Environment Variables
 

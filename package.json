@@ -1,7 +1,7 @@
 {
   "comments": "devDependencies were moved to dependencies to facilitate direct installs from github repository",
   "name": "macconfigurator",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "Configuration manager",
   "license": "MIT",
   "type": "module",
@@ -17,10 +17,11 @@
     "build": "npm run build:server && npm run build:client",
     "build:server": "tsc -b tsconfig.json",
     "build:client": "webpack --config webpack.config.js",
-    "build:dev": "tsc -b tsconfig.json --watch",
+    "build:dev": "tsc -b tsconfig.json --watch & webpack --config webpack.config.js --watch",
     "dev": "npm run build:server && npm run dev:server",
     "dev:server": "node --watch ./dist/index.js",
     "typecheck": "tsc --noEmit",
+    "test": "npm run build:server && node ./dist/tests/test-create-config-and-poke-api.js",
     "prepublishOnly": "npm run build",
     "prepare": "npm run build"
   },

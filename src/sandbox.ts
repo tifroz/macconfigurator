@@ -4,10 +4,20 @@ import { configManager } from "./index.js";
 const inMemoryParams = {
   port: 4480,
   mountPath: "/configurator", // Can be changed to any path like "/config", "/api/config", etc.
-  logger: console,
+  logger: {
+    debug: (msg: string, ...args: any[]) => console.debug(`[DEBUG] ${msg}`, ...args),
+    info: (msg: string, ...args: any[]) => console.info(`[INFO] ${msg}`, ...args),
+    warn: (msg: string, ...args: any[]) => console.warn(`[WARN] ${msg}`, ...args),
+    error: (msg: string, ...args: any[]) => console.error(`[ERROR] ${msg}`, ...args),
+    log: (msg: string, ...args: any[]) => console.log(`[LOG] ${msg}`, ...args),
+  },
   admin: {
     username: "admin",
     password: "admin",
+  },
+  cacheControl: {
+    maxAgeSeconds: 10,
+    defaultMaxAgeSeconds: 60,
   },
 };
 await configManager.start(inMemoryParams);
@@ -25,7 +35,13 @@ console.info(`
 /*const configManagerOptions = {
     port: 4480,
     mountPath: "/configurator",
-    logger: console,
+    logger: {
+      debug: (msg: string, ...args: any[]) => console.debug(`[DEBUG] ${msg}`, ...args),
+      info: (msg: string, ...args: any[]) => console.info(`[INFO] ${msg}`, ...args),
+      warn: (msg: string, ...args: any[]) => console.warn(`[WARN] ${msg}`, ...args),
+      error: (msg: string, ...args: any[]) => console.error(`[ERROR] ${msg}`, ...args),
+      log: (msg: string, ...args: any[]) => console.log(`[LOG] ${msg}`, ...args),
+    },
     admin: {
       username: "admin", // REPLACE WITH YOUR ADMIN USERNAME
       password: "admin", // REPLACE WITH YOUR ADMIN PASSWORD

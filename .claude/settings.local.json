@@ -12,7 +12,9 @@
       "WebFetch(domain:effect.website)",
       "Bash(npm run:*)",
       "Bash(node:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(mv:*)",
+      "Bash(npm test)"
     ],
     "deny": []
   }

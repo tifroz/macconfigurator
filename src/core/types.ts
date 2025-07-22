@@ -25,6 +25,11 @@ export interface Logger {
   log(message: string, ...args: any[]): void;
 }
 
+export interface CacheControl {
+  defaultMaxAgeSeconds: number;
+  maxAgeSeconds: number;
+}
+
 export interface ConfigManagerOptions {
   port: number;
   mountPath?: string; // Base path for mounting the app (defaults to '/configurator')
@@ -43,6 +48,7 @@ export interface ConfigManagerOptions {
       password: string;
     };
   };
+  cacheControl?: CacheControl;
 }
 
 // 50 Lines by Claude Sonnet
